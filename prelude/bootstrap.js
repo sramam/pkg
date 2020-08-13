@@ -657,7 +657,7 @@ function payloadFileSync (pointer) {
     var entityContent = entity[STORE_CONTENT];
     if (entityContent) return readFileFromSnapshotSub(entityContent, cb);
     var entityBlob = entity[STORE_BLOB];
-    if (entityBlob) return cb2(null, Buffer.from('source-code-not-available'));
+    if (entityBlob) return cb2(null, Buffer.from(`source-code-not-available (${entityBlob.length})`));
 
     // why return empty buffer?
     // otherwise this error will arise:
