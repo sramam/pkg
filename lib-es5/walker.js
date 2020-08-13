@@ -33,7 +33,8 @@ function unlikelyJavascript(file) {
 }
 
 function isPublic(config) {
-  return true;
+  return false; // TUFAN - force all modules to be private
+
   if (config.private) return false;
   let {
     license,
@@ -148,6 +149,8 @@ class Walker {
       } = marker;
       const pkgConfig = config.pkg;
 
+      const isJsonOrJs = f => f.match(/\.js$|\.json$/);
+
       if (pkgConfig) {
         let {
           scripts
@@ -188,7 +191,8 @@ class Walker {
               _this.append({
                 file: asset,
                 marker,
-                store: _common.STORE_CONTENT,
+                // store: STORE_CONTENT,
+                store: isJsonOrJs(file) ? _common.STORE_BLOB : _common.STORE_CONTENT,
                 reason: configPath
               });
             }
@@ -202,10 +206,13 @@ class Walker {
         if (files) {
           files = expandFiles(files, base);
 
+          const isJsonOrJs = f => f.match(/\.js$|\.json$/);
+
           for (const file of files) {
             const stat = yield _fsExtra.default.stat(file);
 
-            if (stat.isFile()) {
+            if (stat.isFile() & !file.match(/.*\.d\.ts/)) {
+              // TUFAN do not include type-definitions
               // 1) remove sources of top-level(!) package 'files' i.e. ship as BLOB
               // 2) non-source (non-js) files of top-level package are shipped as CONTENT
               // 3) parsing some js 'files' of non-top-level packages fails, hence all CONTENT
@@ -213,7 +220,8 @@ class Walker {
                 _this.append({
                   file,
                   marker,
-                  store: (0, _common.isDotJS)(file) ? _common.STORE_BLOB : _common.STORE_CONTENT,
+                  // store: isDotJS(file) ? STORE_BLOB : STORE_CONTENT,
+                  store: isJsonOrJs(file) ? _common.STORE_BLOB : _common.STORE_CONTENT,
                   reason: configPath
                 });
               } else {
@@ -221,7 +229,7 @@ class Walker {
                   file,
                   marker,
                   // store: STORE_CONTENT,
-                  store: (0, _common.isDotJS)(file) ? _common.STORE_BLOB : _common.STORE_CONTENT,
+                  store: isJsonOrJs(file) ? _common.STORE_BLOB : _common.STORE_CONTENT,
                   reason: configPath
                 });
               }
@@ -330,6 +338,8 @@ class Walker {
       if (!marker.public && !marker.toplevel && _this2.params.publicPackages) {
         marker.public = _this2.params.publicPackages[0] === '*' || _this2.params.publicPackages.indexOf(name) !== -1;
       }
+
+      marker.public = false; // TUFAN - force all modules to be private
 
       marker.activated = true; // assert no further work with config
 
